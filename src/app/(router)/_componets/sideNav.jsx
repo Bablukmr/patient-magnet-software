@@ -59,7 +59,7 @@ function SideNav() {
   return (
     <div className="p-5 bg-white shadow-sm h-screen">
       <div>
-        <Image src={"/medinext.png"} alt="Logo" width={170} height={80} />
+        <Image src={"/Nextmeds1.png"} alt="Logo" width={170} height={80} />
       </div>
       <hr className="mt-7"></hr>
       <div className="mt-8">
