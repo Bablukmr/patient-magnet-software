@@ -1,65 +1,56 @@
-"use client";
+"use client"
 import React, { useState } from 'react';
 import { Edit3, Trash, CheckCircle, AlertCircle, Printer } from 'lucide-react';
 import Image from 'next/image';
 
 const patientsData = [
-  { id: 1, name: 'John Doe', age: 30, billing: { dues: 200, paid: 100 }, problem: 'Flu' },
-  { id: 2, name: 'Jane Smith', age: 25, billing: { dues: 150, paid: 150 }, problem: 'Back Pain' },
-  { id: 3, name: 'Alice Johnson', age: 45, billing: { dues: 300, paid: 200 }, problem: 'Diabetes' },
-  { id: 4, name: 'Bob Brown', age: 50, billing: { dues: 100, paid: 100 }, problem: 'Hypertension' },
-  { id: 5, name: 'Charlie Green', age: 35, billing: { dues: 250, paid: 50 }, problem: 'Asthma' },
-  { id: 6, name: 'Diana Prince', age: 28, billing: { dues: 0, paid: 0 }, problem: 'Healthy' },
-  { id: 7, name: 'Edward Kenway', age: 38, billing: { dues: 400, paid: 350 }, problem: 'Arthritis' },
-  { id: 8, name: 'Fiona Apple', age: 33, billing: { dues: 150, paid: 150 }, problem: 'Cold' },
-  { id: 9, name: 'George Harrison', age: 40, billing: { dues: 200, paid: 100 }, problem: 'Allergies' },
-  { id: 10, name: 'Hannah White', age: 22, billing: { dues: 300, paid: 250 }, problem: 'Migraine' },
-  { id: 11, name: 'Ivan Drago', age: 32, billing: { dues: 200, paid: 200 }, problem: 'Flu' },
-  { id: 12, name: 'Jessica Jones', age: 26, billing: { dues: 150, paid: 100 }, problem: 'Anxiety' },
-  { id: 13, name: 'Kyle Reese', age: 31, billing: { dues: 250, paid: 50 }, problem: 'PTSD' },
-  { id: 14, name: 'Laura Palmer', age: 29, billing: { dues: 100, paid: 100 }, problem: 'Insomnia' },
-  { id: 15, name: 'Michael Scott', age: 41, billing: { dues: 300, paid: 200 }, problem: 'Stress' },
-  { id: 16, name: 'Nancy Drew', age: 27, billing: { dues: 150, paid: 150 }, problem: 'Headache' },
-  { id: 17, name: 'Oliver Twist', age: 35, billing: { dues: 400, paid: 300 }, problem: 'Malnutrition' },
-  { id: 18, name: 'Pam Beesly', age: 30, billing: { dues: 250, paid: 200 }, problem: 'Pregnancy' },
-  { id: 19, name: 'Quentin Tarantino', age: 45, billing: { dues: 100, paid: 50 }, problem: 'Hypertension' },
-  { id: 20, name: 'Rachel Green', age: 28, billing: { dues: 300, paid: 250 }, problem: 'Depression' },
-  { id: 21, name: 'Sam Winchester', age: 34, billing: { dues: 200, paid: 150 }, problem: 'Anxiety' },
-  { id: 22, name: 'Tina Turner', age: 38, billing: { dues: 150, paid: 150 }, problem: 'Back Pain' },
-  { id: 23, name: 'Ursula Buffay', age: 26, billing: { dues: 250, paid: 200 }, problem: 'Flu' },
-  { id: 24, name: 'Victor Frankenstein', age: 40, billing: { dues: 100, paid: 100 }, problem: 'Arthritis' },
-  { id: 25, name: 'Walter White', age: 50, billing: { dues: 300, paid: 200 }, problem: 'Cancer' },
-  { id: 26, name: 'Xena Warrior', age: 32, billing: { dues: 200, paid: 150 }, problem: 'Wounds' },
-  { id: 27, name: 'Yoda Jedi', age: 900, billing: { dues: 0, paid: 0 }, problem: 'Old Age' },
-  { id: 28, name: 'Zelda Fitzgerald', age: 29, billing: { dues: 150, paid: 100 }, problem: 'Mental Health' },
-  { id: 29, name: 'Arya Stark', age: 22, billing: { dues: 250, paid: 250 }, problem: 'Sword Injury' },
-  { id: 30, name: 'Bilbo Baggins', age: 111, billing: { dues: 300, paid: 100 }, problem: 'Old Age' },
-  { id: 31, name: 'Cersei Lannister', age: 42, billing: { dues: 400, paid: 300 }, problem: 'Alcoholism' },
-  { id: 32, name: 'Daenerys Targaryen', age: 31, billing: { dues: 200, paid: 150 }, problem: 'Stress' },
-  { id: 33, name: 'Eddard Stark', age: 48, billing: { dues: 150, paid: 100 }, problem: 'PTSD' },
-  { id: 34, name: 'Frodo Baggins', age: 33, billing: { dues: 250, paid: 150 }, problem: 'Ring Burden' },
-  { id: 35, name: 'Gandalf Grey', age: 2019, billing: { dues: 0, paid: 0 }, problem: 'Magic Exhaustion' },
-  { id: 36, name: 'Harry Potter', age: 18, billing: { dues: 300, paid: 200 }, problem: 'Scar Pain' },
-  { id: 37, name: 'Iron Man', age: 48, billing: { dues: 400, paid: 300 }, problem: 'Chest Pain' },
-  { id: 38, name: 'Jack Sparrow', age: 40, billing: { dues: 200, paid: 150 }, problem: 'Pirate Wounds' },
-  { id: 39, name: 'Katniss Everdeen', age: 25, billing: { dues: 150, paid: 100 }, problem: 'Trauma' },
-  { id: 40, name: 'Legolas Greenleaf', age: 2931, billing: { dues: 0, paid: 0 }, problem: 'Elf Fatigue' },
-  { id: 41, name: 'Minerva McGonagall', age: 85, billing: { dues: 300, paid: 250 }, problem: 'Magic Exhaustion' },
-  { id: 42, name: 'Neo Matrix', age: 35, billing: { dues: 400, paid: 300 }, problem: 'Virtual Reality Syndrome' },
-  { id: 43, name: 'Optimus Prime', age: 1000000, billing: { dues: 0, paid: 0 }, problem: 'Mechanical Issues' },
-  { id: 44, name: 'Peter Parker', age: 21, billing: { dues: 200, paid: 150 }, problem: 'Spider Bite' },
-  { id: 45, name: 'Quasimodo', age: 40, billing: { dues: 150, paid: 100 }, problem: 'Spinal Deformity' },
-  { id: 46, name: 'Ragnar Lothbrok', age: 45, billing: { dues: 250, paid: 200 }, problem: 'Battle Wounds' },
-  { id: 47, name: 'Sansa Stark', age: 23, billing: { dues: 100, paid: 100 }, problem: 'Depression' },
-  { id: 48, name: 'Tyrion Lannister', age: 38, billing: { dues: 300, paid: 250 }, problem: 'Alcoholism' },
-  { id: 49, name: 'Ultron', age: 5, billing: { dues: 200, paid: 200 }, problem: 'AI Malfunction' },
-  { id: 50, name: 'Voldemort', age: 71, billing: { dues: 400, paid: 350 }, problem: 'Dark Magic' },
+  { id: 1, name: 'John Doe', age: 30, mobile: '1234567890', billing: { dues: 200, paid: 100 }, problem: 'Flu' },
+  { id: 2, name: 'Jane Smith', age: 25, mobile: '2345678901', billing: { dues: 150, paid: 150 }, problem: 'Back Pain' },
+  { id: 3, name: 'Alice Johnson', age: 45, mobile: '3456789012', billing: { dues: 300, paid: 200 }, problem: 'Diabetes' },
+  { id: 4, name: 'Bob Brown', age: 50, mobile: '4567890123', billing: { dues: 100, paid: 100 }, problem: 'Hypertension' },
+  { id: 5, name: 'Charlie Green', age: 35, mobile: '5678901234', billing: { dues: 250, paid: 50 }, problem: 'Asthma' },
+  { id: 6, name: 'Diana Prince', age: 28, mobile: '6789012345', billing: { dues: 0, paid: 0 }, problem: 'Healthy' },
+  { id: 7, name: 'Edward Kenway', age: 38, mobile: '7890123456', billing: { dues: 400, paid: 350 }, problem: 'Arthritis' },
+  { id: 8, name: 'Fiona Apple', age: 33, mobile: '8901234567', billing: { dues: 150, paid: 150 }, problem: 'Cold' },
+  { id: 9, name: 'George Harrison', age: 40, mobile: '9012345678', billing: { dues: 200, paid: 100 }, problem: 'Allergies' },
+  { id: 10, name: 'Hannah White', age: 22, mobile: '0123456789', billing: { dues: 300, paid: 250 }, problem: 'Migraine' },
+  { id: 11, name: 'Ivan Drago', age: 32, mobile: '9876543210', billing: { dues: 200, paid: 200 }, problem: 'Flu' },
+  { id: 12, name: 'Jessica Jones', age: 26, mobile: '8765432109', billing: { dues: 150, paid: 100 }, problem: 'Anxiety' },
+  { id: 13, name: 'Kyle Reese', age: 31, mobile: '7654321098', billing: { dues: 250, paid: 50 }, problem: 'PTSD' },
+  { id: 14, name: 'Laura Palmer', age: 29, mobile: '6543210987', billing: { dues: 100, paid: 100 }, problem: 'Insomnia' },
+  { id: 15, name: 'Michael Scott', age: 41, mobile: '5432109876', billing: { dues: 300, paid: 200 }, problem: 'Stress' },
+  { id: 16, name: 'Nancy Drew', age: 27, mobile: '4321098765', billing: { dues: 150, paid: 150 }, problem: 'Headache' },
+  { id: 17, name: 'Oliver Twist', age: 35, mobile: '3210987654', billing: { dues: 400, paid: 300 }, problem: 'Malnutrition' },
+  { id: 18, name: 'Pam Beesly', age: 30, mobile: '2109876543', billing: { dues: 250, paid: 200 }, problem: 'Pregnancy' },
+  { id: 19, name: 'Quentin Tarantino', age: 45, mobile: '1098765432', billing: { dues: 100, paid: 50 }, problem: 'Hypertension' },
+  { id: 20, name: 'Rachel Green', age: 28, mobile: '0987654321', billing: { dues: 300, paid: 250 }, problem: 'Depression' },
+  { id: 21, name: 'Sam Winchester', age: 34, mobile: '9876543210', billing: { dues: 200, paid: 150 }, problem: 'Anxiety' },
+  { id: 22, name: 'Tina Turner', age: 38, mobile: '8765432109', billing: { dues: 150, paid: 150 }, problem: 'Back Pain' },
+  { id: 23, name: 'Ursula Buffay', age: 26, mobile: '7654321098', billing: { dues: 250, paid: 200 }, problem: 'Flu' },
+  { id: 24, name: 'Victor Frankenstein', age: 40, mobile: '6543210987', billing: { dues: 100, paid: 100 }, problem: 'Arthritis' },
+  { id: 25, name: 'Walter White', age: 50, mobile: '5432109876', billing: { dues: 300, paid: 200 }, problem: 'Cancer' },
+  { id: 26, name: 'Xena Warrior', age: 32, mobile: '4321098765', billing: { dues: 200, paid: 150 }, problem: 'Wounds' },
+  { id: 27, name: 'Yoda Jedi', age: 900, mobile: '3210987654', billing: { dues: 0, paid: 0 }, problem: 'Old Age' },
+  { id: 28, name: 'Zelda Fitzgerald', age: 29, mobile: '2109876543', billing: { dues: 150, paid: 100 }, problem: 'Mental Health' },
+  { id: 29, name: 'Arya Stark', age: 22, mobile: '1098765432', billing: { dues: 250, paid: 250 }, problem: 'Sword Injury' },
+  { id: 30, name: 'Bilbo Baggins', age: 111, mobile: '0987654321', billing: { dues: 300, paid: 100 }, problem: 'Old Age' },
+  { id: 31, name: 'Cersei Lannister', age: 42, mobile: '9876543210', billing: { dues: 400, paid: 300 }, problem: 'Alcoholism' },
+  { id: 32, name: 'Daenerys Targaryen', age: 31, mobile: '8765432109', billing: { dues: 200, paid: 150 }, problem: 'Stress' },
+  { id: 33, name: 'Eddard Stark', age: 48, mobile: '7654321098', billing: { dues: 150, paid: 100 }, problem: 'PTSD' },
+  { id: 34, name: 'Frodo Baggins', age: 33, mobile: '6543210987', billing: { dues: 250, paid: 150 }, problem: 'Ring Burden' },
+  { id: 35, name: 'Gandalf Grey', age: 2019, mobile: '5432109876', billing: { dues: 0, paid: 0 }, problem: 'Magic Exhaustion' },
+  { id: 36, name: 'Harry Potter', age: 18, mobile: '4321098765', billing: { dues: 300, paid: 200 }, problem: 'Scar Pain' },
+  { id: 37, name: 'Iron Man', age: 48, mobile: '3210987654', billing: { dues: 400, paid: 300 }, problem: 'Chest Pain' },
+  { id: 38, name: 'Jack Sparrow', age: 40, mobile: '2109876543', billing: { dues: 200, paid: 150 }, problem: 'Pirate Wounds' },
+  { id: 39, name: 'Katniss Everdeen', age: 25, mobile: '1098765432', billing: { dues: 150, paid: 100 }, problem: 'Trauma' },
+  { id: 40, name: 'Legolas Greenleaf', age: 2931, mobile: '0987654321', billing: { dues: 0, paid: 0 }, problem: 'Elf Fatigue' },
 ];
+
 
 function Patient() {
   const [patients, setPatients] = useState(patientsData);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filter, setFilter] = useState({ minDues: 0, maxDues: Infinity });
+  const [filter, setFilter] = useState({ minDues: 0, maxDues: Infinity, paidOnly: false, dueOnly: false });
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const patientsPerPage = 10;
@@ -67,7 +58,9 @@ function Patient() {
   const filteredPatients = patients.filter(patient =>
     patient.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
     patient.billing.dues >= filter.minDues &&
-    patient.billing.dues <= filter.maxDues
+    patient.billing.dues <= filter.maxDues &&
+    (filter.paidOnly ? patient.billing.paid === patient.billing.dues : true) &&
+    (filter.dueOnly ? patient.billing.paid < patient.billing.dues : true)
   );
 
   const indexOfLastPatient = currentPage * patientsPerPage;
@@ -82,8 +75,9 @@ function Patient() {
   };
 
   const handleFilterChange = (event) => {
-    const { name, value } = event.target;
-    setFilter(prevFilter => ({ ...prevFilter, [name]: value ? parseInt(value, 10) : value }));
+    const { name, value, type, checked } = event.target;
+    const newValue = type === 'checkbox' ? checked : parseInt(value, 10);
+    setFilter(prevFilter => ({ ...prevFilter, [name]: newValue }));
     setCurrentPage(1); // Reset to first page on new filter
   };
 
@@ -127,24 +121,42 @@ function Patient() {
           onChange={handleSearch}
           className="p-2 border rounded-md"
         />
-        <div className="flex gap-2">
+        <input
+          type="number"
+          name="minDues"
+          placeholder="Min Dues"
+          value={filter.minDues}
+          onChange={handleFilterChange}
+          className="p-2 border rounded-md"
+        />
+        <input
+          type="number"
+          name="maxDues"
+          placeholder="Max Dues"
+          value={filter.maxDues === Infinity ? '' : filter.maxDues}
+          onChange={handleFilterChange}
+          className="p-2 border rounded-md"
+        />
+        <label className="flex items-center gap-2">
           <input
-            type="number"
-            name="minDues"
-            placeholder="Min Dues"
-            value={filter.minDues}
+            type="checkbox"
+            name="paidOnly"
+            checked={filter.paidOnly}
             onChange={handleFilterChange}
-            className="p-2 border rounded-md"
+            className="mr-2"
           />
+          Paid Only
+        </label>
+        <label className="flex items-center gap-2">
           <input
-            type="number"
-            name="maxDues"
-            placeholder="Max Dues"
-            value={filter.maxDues === Infinity ? '' : filter.maxDues}
+            type="checkbox"
+            name="dueOnly"
+            checked={filter.dueOnly}
             onChange={handleFilterChange}
-            className="p-2 border rounded-md"
+            className="mr-2"
           />
-        </div>
+          Due Only
+        </label>
       </div>
 
       <table className="min-w-full bg-white border">
@@ -153,6 +165,7 @@ function Patient() {
             <th className="py-2 px-4 border">ID</th>
             <th className="py-2 px-4 border">Name</th>
             <th className="py-2 px-4 border">Age</th>
+            <th className="py-2 px-4 border">Mobile</th>
             <th className="py-2 px-4 border">Problem</th>
             <th className="py-2 px-4 border">Dues</th>
             <th className="py-2 px-4 border">Paid</th>
@@ -166,6 +179,7 @@ function Patient() {
               <td className="py-2 px-4 border">{patient.id}</td>
               <td className="py-2 px-4 border">{patient.name}</td>
               <td className="py-2 px-4 border">{patient.age}</td>
+              <td className="py-2 px-4 border">{patient.mobile}</td>
               <td className="py-2 px-4 border">{patient.problem}</td>
               <td className="py-2 px-4 border">Rs {patient.billing.dues}</td>
               <td className="py-2 px-4 border">Rs {patient.billing.paid}</td>
@@ -246,6 +260,7 @@ function Patient() {
             <h3 className="text-lg font-bold mb-2">Patient Bill</h3>
             <p><strong>Patient Name:</strong> {selectedPatient.name}</p>
             <p><strong>Age:</strong> {selectedPatient.age}</p>
+            <p><strong>Mobile:</strong> {selectedPatient.mobile}</p>
             <p><strong>Problem:</strong> {selectedPatient.problem}</p>
             <p><strong>Dues:</strong> Rs {selectedPatient.billing.dues}</p>
             <p><strong>Paid:</strong> Rs {selectedPatient.billing.paid}</p>
