@@ -1,6 +1,6 @@
 "use client"
 import React, { useState } from 'react';
-import { Edit3, Trash, CheckCircle, AlertCircle, Printer } from 'lucide-react';
+import { Edit3, Trash, CheckCircle, AlertCircle, Printer, MessageSquare } from 'lucide-react';
 import Image from 'next/image';
 
 const patientsData = [
@@ -45,7 +45,6 @@ const patientsData = [
   { id: 39, name: 'Katniss Everdeen', age: 25, mobile: '1098765432', billing: { dues: 150, paid: 100 }, problem: 'Trauma' },
   { id: 40, name: 'Legolas Greenleaf', age: 2931, mobile: '0987654321', billing: { dues: 0, paid: 0 }, problem: 'Elf Fatigue' },
 ];
-
 
 function Patient() {
   const [patients, setPatients] = useState(patientsData);
@@ -108,7 +107,26 @@ function Patient() {
       setSelectedPatient(null);
     }, 500);
   };
+  const sendSMS = (mobileNumber) => {
+    const message = "Your message here"; // Customize your SMS message
+    const apiKey = "YOUR_API_KEY"; // Replace with your SMS service provider API key
+    const apiUrl = "SMS_PROVIDER_API_URL"; // Replace with the API endpoint provided by your SMS service provider
 
+    // Make POST request to SMS service provider's API
+    axios.post(apiUrl, {
+      apiKey: apiKey,
+      to: mobileNumber,
+      message: message
+    })
+    .then(response => {
+      console.log("SMS sent successfully");
+      // Handle success, if needed
+    })
+    .catch(error => {
+      console.error("Error sending SMS:", error);
+      // Handle error, if needed
+    });
+  };
   return (
     <div className="p-5">
       <h1 className="text-2xl font-bold mb-4">Patient List</h1>
@@ -121,22 +139,22 @@ function Patient() {
           onChange={handleSearch}
           className="p-2 border rounded-md"
         />
-        <input
+        {/* <input
           type="number"
           name="minDues"
           placeholder="Min Dues"
           value={filter.minDues}
           onChange={handleFilterChange}
           className="p-2 border rounded-md"
-        />
-        <input
+        /> */}
+        {/* <input
           type="number"
           name="maxDues"
           placeholder="Max Dues"
           value={filter.maxDues === Infinity ? '' : filter.maxDues}
           onChange={handleFilterChange}
           className="p-2 border rounded-md"
-        />
+        /> */}
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
@@ -208,6 +226,12 @@ function Patient() {
                   className="text-gray-500 hover:text-gray-700"
                 >
                   <Printer />
+                </button>
+                <button
+                  onClick={() => sendSMS(patient.mobile)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <MessageSquare />
                 </button>
               </td>
             </tr>
