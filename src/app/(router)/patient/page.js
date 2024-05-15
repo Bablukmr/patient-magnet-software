@@ -1,7 +1,20 @@
 "use client"
-import React, { useState } from 'react';
-import { Edit3, Trash, CheckCircle, AlertCircle, Printer, MessageSquare } from 'lucide-react';
-import Image from 'next/image';
+import React, { useState } from "react";
+import { Edit3, Trash, CheckCircle, AlertCircle, Printer, MessageSquare } from "lucide-react";
+import Image from "next/image";
+import { saveAs } from "file-saver";
+import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Table, TableHeader, TableCell, TableBody, DataTableCell } from "@react-pdf/renderer";
+import { CSVLink } from "react-csv";
+import * as XLSX from "xlsx";
+
+const styles = StyleSheet.create({
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center"
+  }
+});
 
 const patientsData = [
   { id: 1, name: 'John Doe', age: 30, mobile: '1234567890', billing: { dues: 200, paid: 100 }, problem: 'Flu' },
@@ -48,23 +61,34 @@ const patientsData = [
 
 function Patient() {
   const [patients, setPatients] = useState(patientsData);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filter, setFilter] = useState({ minDues: 0, maxDues: Infinity, paidOnly: false, dueOnly: false });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filter, setFilter] = useState({
+    minDues: 0,
+    maxDues: Infinity,
+    paidOnly: false,
+    dueOnly: false,
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const patientsPerPage = 10;
 
-  const filteredPatients = patients.filter(patient =>
-    patient.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    patient.billing.dues >= filter.minDues &&
-    patient.billing.dues <= filter.maxDues &&
-    (filter.paidOnly ? patient.billing.paid === patient.billing.dues : true) &&
-    (filter.dueOnly ? patient.billing.paid < patient.billing.dues : true)
+  const filteredPatients = patients.filter(
+    (patient) =>
+      patient.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      patient.billing.dues >= filter.minDues &&
+      patient.billing.dues <= filter.maxDues &&
+      (filter.paidOnly
+        ? patient.billing.paid === patient.billing.dues
+        : true) &&
+      (filter.dueOnly ? patient.billing.paid < patient.billing.dues : true)
   );
 
   const indexOfLastPatient = currentPage * patientsPerPage;
   const indexOfFirstPatient = indexOfLastPatient - patientsPerPage;
-  const currentPatients = filteredPatients.slice(indexOfFirstPatient, indexOfLastPatient);
+  const currentPatients = filteredPatients.slice(
+    indexOfFirstPatient,
+    indexOfLastPatient
+  );
 
   const totalPages = Math.ceil(filteredPatients.length / patientsPerPage);
 
@@ -75,8 +99,8 @@ function Patient() {
 
   const handleFilterChange = (event) => {
     const { name, value, type, checked } = event.target;
-    const newValue = type === 'checkbox' ? checked : parseInt(value, 10);
-    setFilter(prevFilter => ({ ...prevFilter, [name]: newValue }));
+    const newValue = type === "checkbox" ? checked : parseInt(value, 10);
+    setFilter((prevFilter) => ({ ...prevFilter, [name]: newValue }));
     setCurrentPage(1); // Reset to first page on new filter
   };
 
@@ -107,196 +131,218 @@ function Patient() {
       setSelectedPatient(null);
     }, 500);
   };
+
+  const handleExportPDF = () => {
+    const patientsDataForPDF = filteredPatients.map(patient => ({
+      ID: patient.id,
+      Name: patient.name,
+      Age: patient.age,
+      Mobile: patient.mobile,
+      Problem: patient.problem,
+      Dues: `Rs ${patient.billing.dues}`,
+      Paid: `Rs ${patient.billing.paid}`,
+      Status: patient.billing.dues > patient.billing.paid ? "Due" : "Paid"
+    }));
+
+    const PDFDocument = (
+      <Document>
+        <Page>
+          <View>
+            <Text style={styles.title}>Patient List</Text>
+            <Table data={patientsDataForPDF}>
+              <TableHeader>
+                <TableCell>ID</TableCell>
+                <TableCell>Name</TableCell>
+                <TableCell>Age</TableCell>
+                <TableCell>Mobile</TableCell>
+                <TableCell>Problem</TableCell>
+                <TableCell>Dues</TableCell>
+                <TableCell>Paid</TableCell>
+                <TableCell>Status</TableCell>
+              </TableHeader>
+              <TableBody>
+                <DataTableCell getContent={(row) => row.ID} />
+                <DataTableCell getContent={(row) => row.Name} />
+                <DataTableCell getContent={(row) => row.Age} />
+                <DataTableCell getContent={(row) => row.Mobile} />
+                <DataTableCell getContent={(row) => row.Problem} />
+                <DataTableCell getContent={(row) => row.Dues} />
+                <DataTableCell getContent={(row) => row.Paid} />
+                <DataTableCell getContent={(row) => row.Status} />
+              </TableBody>
+            </Table>
+          </View>
+        </Page>
+      </Document>
+    );
+
+    const pdfBlob = PDFBlob(PDFDocument);
+    saveAs(pdfBlob, "patient_list.pdf");
+  };
+
+  const handleExportCSV = () => {
+    const csvData = filteredPatients.map(patient => ({
+      ID: patient.id,
+      Name: patient.name,
+      Age: patient.age,
+      Mobile: patient.mobile,
+      Problem: patient.problem,
+      Dues: `Rs ${patient.billing.dues}`,
+      Paid: `Rs ${patient.billing.paid}`,
+      Status: patient.billing.dues > patient.billing.paid ? "Due" : "Paid"
+    }));
+    const headers = Object.keys(csvData[0]);
+    const csvString = [
+      headers.join(","),
+      ...csvData.map(item => headers.map(header => item[header]).join(","))
+    ].join("\n");
+
+    const csvBlob = new Blob([csvString], { type: "text/csv;charset=utf-8" });
+    saveAs(csvBlob, "patient_list.csv");
+  };
+
+  const handleExportExcel = () => {
+    const excelData = filteredPatients.map(patient => ({
+      ID: patient.id,
+      Name: patient.name,
+      Age: patient.age,
+      Mobile: patient.mobile,
+      Problem: patient.problem,
+      Dues: `Rs ${patient.billing.dues}`,
+      Paid: `Rs ${patient.billing.paid}`,
+      Status: patient.billing.dues > patient.billing.paid ? "Due" : "Paid"
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Patient List");
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    const excelBlob = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(excelBlob, "patient_list.xlsx");
+  };
+
   const sendSMS = (mobileNumber) => {
     const message = "Your message here"; // Customize your SMS message
     const apiKey = "YOUR_API_KEY"; // Replace with your SMS service provider API key
     const apiUrl = "SMS_PROVIDER_API_URL"; // Replace with the API endpoint provided by your SMS service provider
 
-    // Make POST request to SMS service provider's API
-    axios.post(apiUrl, {
-      apiKey: apiKey,
-      to: mobileNumber,
-      message: message
-    })
-    .then(response => {
-      console.log("SMS sent successfully");
-      // Handle success, if needed
-    })
-    .catch(error => {
-      console.error("Error sending SMS:", error);
-      // Handle error, if needed
-    });
+    // Code to send SMS using the API
   };
+
   return (
     <div className="p-5">
-      <h1 className="text-2xl font-bold mb-4">Patient List</h1>
-      
-      <div className="mb-4 flex flex-col md:flex-row gap-4">
+      <div className="flex justify-between items-center mb-5">
+        <h1 className="text-2xl font-bold">Patient Records</h1>
         <input
           type="text"
-          placeholder="Search by name"
+          className="border px-3 py-1 rounded-md"
+          placeholder="Search by Name"
           value={searchTerm}
           onChange={handleSearch}
-          className="p-2 border rounded-md"
         />
-        {/* <input
-          type="number"
-          name="minDues"
-          placeholder="Min Dues"
-          value={filter.minDues}
-          onChange={handleFilterChange}
-          className="p-2 border rounded-md"
-        /> */}
-        {/* <input
-          type="number"
-          name="maxDues"
-          placeholder="Max Dues"
-          value={filter.maxDues === Infinity ? '' : filter.maxDues}
-          onChange={handleFilterChange}
-          className="p-2 border rounded-md"
-        /> */}
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            name="paidOnly"
-            checked={filter.paidOnly}
-            onChange={handleFilterChange}
-            className="mr-2"
-          />
-          Paid Only
-        </label>
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            name="dueOnly"
-            checked={filter.dueOnly}
-            onChange={handleFilterChange}
-            className="mr-2"
-          />
-          Due Only
-        </label>
       </div>
 
-      <table className="min-w-full bg-white border">
-        <thead>
-          <tr>
-            <th className="py-2 px-4 border">ID</th>
-            <th className="py-2 px-4 border">Name</th>
-            <th className="py-2 px-4 border">Age</th>
-            <th className="py-2 px-4 border">Mobile</th>
-            <th className="py-2 px-4 border">Problem</th>
-            <th className="py-2 px-4 border">Dues</th>
-            <th className="py-2 px-4 border">Paid</th>
-            <th className="py-2 px-4 border">Status</th>
-            <th className="py-2 px-4 border">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentPatients.map((patient) => (
-            <tr key={patient.id} className="hover:bg-gray-100">
-              <td className="py-2 px-4 border">{patient.id}</td>
-              <td className="py-2 px-4 border">{patient.name}</td>
-              <td className="py-2 px-4 border">{patient.age}</td>
-              <td className="py-2 px-4 border">{patient.mobile}</td>
-              <td className="py-2 px-4 border">{patient.problem}</td>
-              <td className="py-2 px-4 border">Rs {patient.billing.dues}</td>
-              <td className="py-2 px-4 border">Rs {patient.billing.paid}</td>
-              <td className="py-2 px-4 border">
-                {patient.billing.dues > patient.billing.paid ? (
-                  <AlertCircle className="text-red-500 inline" />
-                ) : (
-                  <CheckCircle className="text-green-500 inline" />
-                )}
-              </td>
-              <td className="py-2 px-4 border flex gap-2 justify-center">
-                <button
-                  onClick={() => handleEdit(patient.id)}
-                  className="text-blue-500 hover:text-blue-700"
-                >
-                  <Edit3 />
-                </button>
-                <button
-                  onClick={() => handleDelete(patient.id)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <Trash />
-                </button>
-                <button
-                  onClick={() => handlePrint(patient)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <Printer />
-                </button>
-                <button
-                  onClick={() => sendSMS(patient.mobile)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <MessageSquare />
-                </button>
-              </td>
+      <div className="overflow-x-auto">
+        <table className="table-auto w-full">
+          <thead>
+            <tr>
+              <th className="px-4 py-2">ID</th>
+              <th className="px-4 py-2">Name</th>
+              <th className="px-4 py-2">Age</th>
+              <th className="px-4 py-2">Mobile</th>
+              <th className="px-4 py-2">Problem</th>
+              <th className="px-4 py-2">Dues</th>
+              <th className="px-4 py-2">Paid</th>
+              <th className="px-4 py-2">Status</th>
+              <th className="px-4 py-2">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-      
+          </thead>
+          <tbody>
+            {currentPatients.map((patient) => (
+              <tr key={patient.id}>
+                <td className="border px-4 py-2">{patient.id}</td>
+                <td className="border px-4 py-2">{patient.name}</td>
+                <td className="border px-4 py-2">{patient.age}</td>
+                <td className="border px-4 py-2">{patient.mobile}</td>
+                <td className="border px-4 py-2">{patient.problem}</td>
+                <td className="border px-4 py-2">{`Rs ${patient.billing.dues}`}</td>
+                <td className="border px-4 py-2">{`Rs ${patient.billing.paid}`}</td>
+                <td className="border px-4 py-2">{patient.billing.dues > patient.billing.paid ? "Due" : "Paid"}</td>
+                <td className="border px-4 py-2">
+                  <Edit3
+                    className="cursor-pointer text-blue-500 mr-2"
+                    size={20}
+                    onClick={() => handleEdit(patient.id)}
+                  />
+                  <Trash
+                    className="cursor-pointer text-red-500 mr-2"
+                    size={20}
+                    onClick={() => handleDelete(patient.id)}
+                  />
+                  <Printer
+                    className="cursor-pointer text-green-500 mr-2"
+                    size={20}
+                    onClick={() => handlePrint(patient)}
+                  />
+                  <MessageSquare
+                    className="cursor-pointer text-blue-500"
+                    size={20}
+                    onClick={() => sendSMS(patient.mobile)}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
       <div className="mt-4 flex justify-center gap-2">
         <button
-          onClick={handlePrevious}
-          disabled={currentPage === 1}
-          className="px-3 py-1 border rounded-md bg-white text-blue-500 hover:bg-blue-500 hover:text-white disabled:opacity-50"
+          onClick={handleExportPDF}
+          className="px-3 py-1 border rounded-md bg-white text-blue-500 hover:bg-blue-500 hover:text-white"
         >
-          Previous
+          Export PDF
         </button>
-        {Array.from({ length: totalPages }, (_, index) => (
-          <button
-            key={index + 1}
-            onClick={() => paginate(index + 1)}
-            className={`px-3 py-1 border rounded-md ${
-              currentPage === index + 1 ? 'bg-blue-500 text-white' : 'bg-white text-blue-500'
-            }`}
-          >
-            {index + 1}
+        <CSVLink data={filteredPatients} onClick={handleExportCSV}>
+          <button className="px-3 py-1 border rounded-md bg-white text-blue-500 hover:bg-blue-500 hover:text-white">
+            Export CSV
           </button>
-        ))}
+        </CSVLink>
         <button
-          onClick={handleNext}
-          disabled={currentPage === totalPages}
-          className="px-3 py-1 border rounded-md bg-white text-blue-500 hover:bg-blue-500 hover:text-white disabled:opacity-50"
+          onClick={handleExportExcel}
+          className="px-3 py-1 border rounded-md bg-white text-blue-500 hover:bg-blue-500 hover:text-white"
         >
-          Next
+          Export Excel
         </button>
       </div>
 
-      {selectedPatient && (
-        <div id="bill-modal" className="print-only fixed inset-0 flex items-center justify-center bg-white">
-          <div className="p-5 border rounded-md bg-white shadow-lg max-w-md w-full">
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <Image src="/medinext.png" alt="Hospital Logo" width={60} height={30} />
-                <h2 className="text-xl font-bold">City Hospital</h2>
-                <p>123 Main St, City, Country</p>
-              </div>
-              <div>
-                <p>Date: {new Date().toLocaleDateString()}</p>
-                <p>Time: {new Date().toLocaleTimeString()}</p>
-              </div>
-            </div>
-            <h3 className="text-lg font-bold mb-2">Patient Bill</h3>
-            <p><strong>Patient Name:</strong> {selectedPatient.name}</p>
-            <p><strong>Age:</strong> {selectedPatient.age}</p>
-            <p><strong>Mobile:</strong> {selectedPatient.mobile}</p>
-            <p><strong>Problem:</strong> {selectedPatient.problem}</p>
-            <p><strong>Dues:</strong> Rs {selectedPatient.billing.dues}</p>
-            <p><strong>Paid:</strong> Rs {selectedPatient.billing.paid}</p>
-            <p><strong>Balance:</strong> Rs {selectedPatient.billing.dues - selectedPatient.billing.paid}</p>
-            <div className="mt-4 text-center">
-              <button onClick={() => setSelectedPatient(null)} className="px-3 py-1 border rounded-md bg-blue-500 text-white hover:bg-blue-700">
-                Close
-              </button>
-            </div>
-          </div>
+      <div className="mt-5 flex justify-between items-center">
+        <div>
+          <button
+            onClick={handlePrevious}
+            className="px-3 py-1 border rounded-md bg-white text-blue-500 hover:bg-blue-500 hover:text-white"
+          >
+            Previous
+          </button>
+          <span className="mx-2">{`Page ${currentPage} of ${totalPages}`}</span>
+          <button
+            onClick={handleNext}
+            className="px-3 py-1 border rounded-md bg-white text-blue-500 hover:bg-blue-500 hover:text-white"
+          >
+            Next
+          </button>
         </div>
-      )}
+        <select
+          name="perPage"
+          id="perPage"
+          className="border px-2 py-1 rounded-md"
+          onChange={handleFilterChange}
+          value={patientsPerPage}
+        >
+          <option value="10">10 per page</option>
+          <option value="20">20 per page</option>
+          <option value="50">50 per page</option>
+        </select>
+      </div>
     </div>
   );
 }
