@@ -7,15 +7,6 @@ import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Table, TableHe
 import { CSVLink } from "react-csv";
 import * as XLSX from "xlsx";
 
-const styles = StyleSheet.create({
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-    textAlign: "center"
-  }
-});
-
 const patientsData = [
   { id: 1, name: 'John Doe', age: 30, mobile: '1234567890', billing: { dues: 200, paid: 100 }, problem: 'Flu' },
   { id: 2, name: 'Jane Smith', age: 25, mobile: '2345678901', billing: { dues: 150, paid: 150 }, problem: 'Back Pain' },
@@ -132,92 +123,9 @@ function Patient() {
     }, 500);
   };
 
-  const handleExportPDF = () => {
-    const patientsDataForPDF = filteredPatients.map(patient => ({
-      ID: patient.id,
-      Name: patient.name,
-      Age: patient.age,
-      Mobile: patient.mobile,
-      Problem: patient.problem,
-      Dues: `Rs ${patient.billing.dues}`,
-      Paid: `Rs ${patient.billing.paid}`,
-      Status: patient.billing.dues > patient.billing.paid ? "Due" : "Paid"
-    }));
-
-    const PDFDocument = (
-      <Document>
-        <Page>
-          <View>
-            <Text style={styles.title}>Patient List</Text>
-            <Table data={patientsDataForPDF}>
-              <TableHeader>
-                <TableCell>ID</TableCell>
-                <TableCell>Name</TableCell>
-                <TableCell>Age</TableCell>
-                <TableCell>Mobile</TableCell>
-                <TableCell>Problem</TableCell>
-                <TableCell>Dues</TableCell>
-                <TableCell>Paid</TableCell>
-                <TableCell>Status</TableCell>
-              </TableHeader>
-              <TableBody>
-                <DataTableCell getContent={(row) => row.ID} />
-                <DataTableCell getContent={(row) => row.Name} />
-                <DataTableCell getContent={(row) => row.Age} />
-                <DataTableCell getContent={(row) => row.Mobile} />
-                <DataTableCell getContent={(row) => row.Problem} />
-                <DataTableCell getContent={(row) => row.Dues} />
-                <DataTableCell getContent={(row) => row.Paid} />
-                <DataTableCell getContent={(row) => row.Status} />
-              </TableBody>
-            </Table>
-          </View>
-        </Page>
-      </Document>
-    );
-
-    const pdfBlob = PDFBlob(PDFDocument);
+  const generatePDF = async () => {
+    const pdfBlob = await Document.toBlob(PDFDocument);
     saveAs(pdfBlob, "patient_list.pdf");
-  };
-
-  const handleExportCSV = () => {
-    const csvData = filteredPatients.map(patient => ({
-      ID: patient.id,
-      Name: patient.name,
-      Age: patient.age,
-      Mobile: patient.mobile,
-      Problem: patient.problem,
-      Dues: `Rs ${patient.billing.dues}`,
-      Paid: `Rs ${patient.billing.paid}`,
-      Status: patient.billing.dues > patient.billing.paid ? "Due" : "Paid"
-    }));
-    const headers = Object.keys(csvData[0]);
-    const csvString = [
-      headers.join(","),
-      ...csvData.map(item => headers.map(header => item[header]).join(","))
-    ].join("\n");
-
-    const csvBlob = new Blob([csvString], { type: "text/csv;charset=utf-8" });
-    saveAs(csvBlob, "patient_list.csv");
-  };
-
-  const handleExportExcel = () => {
-    const excelData = filteredPatients.map(patient => ({
-      ID: patient.id,
-      Name: patient.name,
-      Age: patient.age,
-      Mobile: patient.mobile,
-      Problem: patient.problem,
-      Dues: `Rs ${patient.billing.dues}`,
-      Paid: `Rs ${patient.billing.paid}`,
-      Status: patient.billing.dues > patient.billing.paid ? "Due" : "Paid"
-    }));
-    const worksheet = XLSX.utils.json_to_sheet(excelData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Patient List");
-    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-    const excelBlob = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(excelBlob, "patient_list.xlsx");
   };
 
   const sendSMS = (mobileNumber) => {
@@ -225,124 +133,167 @@ function Patient() {
     const apiKey = "YOUR_API_KEY"; // Replace with your SMS service provider API key
     const apiUrl = "SMS_PROVIDER_API_URL"; // Replace with the API endpoint provided by your SMS service provider
 
-    // Code to send SMS using the API
+    // Make POST request to SMS service provider's API
+    axios
+      .post(apiUrl, {
+        apiKey: apiKey,
+        to: mobileNumber,
+        message: message,
+      })
+      .then((response) => {
+        console.log("SMS sent successfully");
+        // Handle success, if needed
+      })
+      .catch((error) => {
+        console.error("Error sending SMS:", error);
+        // Handle error, if needed
+      });
   };
 
   return (
     <div className="p-5">
-      <div className="flex justify-between items-center mb-5">
-        <h1 className="text-2xl font-bold">Patient Records</h1>
+      <h1 className="text-2xl font-bold mb-4">Patient List</h1>
+
+      <div className="mb-4 flex flex-col md:flex-row gap-4">
         <input
           type="text"
-          className="border px-3 py-1 rounded-md"
-          placeholder="Search by Name"
+          placeholder="Search by name"
           value={searchTerm}
           onChange={handleSearch}
+          className="p-2 border rounded-md"
         />
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            name="paidOnly"
+            checked={filter.paidOnly}
+            onChange={handleFilterChange}
+            className="mr-2"
+          />
+          Paid Only
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            name="dueOnly"
+            checked={filter.dueOnly}
+            onChange={handleFilterChange}
+            className="mr-2"
+          />
+          Due Only
+        </label>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="table-auto w-full">
-          <thead>
-            <tr>
-              <th className="px-4 py-2">ID</th>
-              <th className="px-4 py-2">Name</th>
-              <th className="px-4 py-2">Age</th>
-              <th className="px-4 py-2">Mobile</th>
-              <th className="px-4 py-2">Problem</th>
-              <th className="px-4 py-2">Dues</th>
-              <th className="px-4 py-2">Paid</th>
-              <th className="px-4 py-2">Status</th>
-              <th className="px-4 py-2">Actions</th>
+      <table className="min-w-full bg-white border">
+        <thead>
+          <tr>
+            <th className="py-2 px-4 border">ID</th>
+            <th className="py-2 px-4 border">Name</th>
+            <th className="py-2 px-4 border">Age</th>
+            <th className="py-2 px-4 border">Mobile</th>
+            <th className="py-2 px-4 border">Problem</th>
+            <th className="py-2 px-4 border">Dues</th>
+            <th className="py-2 px-4 border">Paid</th>
+            <th className="py-2 px-4 border">Status</th>
+            <th className="py-2 px-4 border">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {currentPatients.map((patient) => (
+            <tr key={patient.id} className="hover:bg-gray-100">
+              <td className="py-2 px-4 border">{patient.id}</td>
+              <td className="py-2 px-4 border">{patient.name}</td>
+              <td className="py-2 px-4 border">{patient.age}</td>
+              <td className="py-2 px-4 border">{patient.mobile}</td>
+              <td className="py-2 px-4 border">{patient.problem}</td>
+              <td className="py-2 px-4 border">Rs {patient.billing.dues}</td>
+              <td className="py-2 px-4 border">Rs {patient.billing.paid}</td>
+              <td className="py-2 px-4 border">
+                {patient.billing.dues > patient.billing.paid ? (
+                  <AlertCircle className="text-red-500 inline" />
+                ) : (
+                  <CheckCircle className="text-green-500 inline" />
+                )}
+              </td>
+              <td className="py-2 px-4 border flex gap-2 justify-center">
+                <button
+                  onClick={() => handleEdit(patient.id)}
+                  className="text-blue-500"
+                >
+                  <Edit3 />
+                </button>
+                <button
+                  onClick={() => handleDelete(patient.id)}
+                  className="text-red-500"
+                >
+                  <Trash />
+                </button>
+                <button onClick={() => handlePrint(patient)}>
+                  <Printer />
+                </button>
+                <button onClick={() => sendSMS(patient.mobile)}>
+                  <MessageSquare />
+                </button>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {currentPatients.map((patient) => (
-              <tr key={patient.id}>
-                <td className="border px-4 py-2">{patient.id}</td>
-                <td className="border px-4 py-2">{patient.name}</td>
-                <td className="border px-4 py-2">{patient.age}</td>
-                <td className="border px-4 py-2">{patient.mobile}</td>
-                <td className="border px-4 py-2">{patient.problem}</td>
-                <td className="border px-4 py-2">{`Rs ${patient.billing.dues}`}</td>
-                <td className="border px-4 py-2">{`Rs ${patient.billing.paid}`}</td>
-                <td className="border px-4 py-2">{patient.billing.dues > patient.billing.paid ? "Due" : "Paid"}</td>
-                <td className="border px-4 py-2">
-                  <Edit3
-                    className="cursor-pointer text-blue-500 mr-2"
-                    size={20}
-                    onClick={() => handleEdit(patient.id)}
-                  />
-                  <Trash
-                    className="cursor-pointer text-red-500 mr-2"
-                    size={20}
-                    onClick={() => handleDelete(patient.id)}
-                  />
-                  <Printer
-                    className="cursor-pointer text-green-500 mr-2"
-                    size={20}
-                    onClick={() => handlePrint(patient)}
-                  />
-                  <MessageSquare
-                    className="cursor-pointer text-blue-500"
-                    size={20}
-                    onClick={() => sendSMS(patient.mobile)}
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </table>
 
-      <div className="mt-4 flex justify-center gap-2">
-        <button
-          onClick={handleExportPDF}
-          className="px-3 py-1 border rounded-md bg-white text-blue-500 hover:bg-blue-500 hover:text-white"
-        >
-          Export PDF
-        </button>
-        <CSVLink data={filteredPatients} onClick={handleExportCSV}>
-          <button className="px-3 py-1 border rounded-md bg-white text-blue-500 hover:bg-blue-500 hover:text-white">
-            Export CSV
-          </button>
-        </CSVLink>
-        <button
-          onClick={handleExportExcel}
-          className="px-3 py-1 border rounded-md bg-white text-blue-500 hover:bg-blue-500 hover:text-white"
-        >
-          Export Excel
-        </button>
-      </div>
-
-      <div className="mt-5 flex justify-between items-center">
+      <div className="mt-4 flex justify-between items-center">
         <div>
           <button
             onClick={handlePrevious}
-            className="px-3 py-1 border rounded-md bg-white text-blue-500 hover:bg-blue-500 hover:text-white"
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-blue-500 text-white rounded-md mr-2"
           >
             Previous
           </button>
-          <span className="mx-2">{`Page ${currentPage} of ${totalPages}`}</span>
           <button
             onClick={handleNext}
-            className="px-3 py-1 border rounded-md bg-white text-blue-500 hover:bg-blue-500 hover:text-white"
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-blue-500 text-white rounded-md"
           >
             Next
           </button>
         </div>
-        <select
-          name="perPage"
-          id="perPage"
-          className="border px-2 py-1 rounded-md"
-          onChange={handleFilterChange}
-          value={patientsPerPage}
-        >
-          <option value="10">10 per page</option>
-          <option value="20">20 per page</option>
-          <option value="50">50 per page</option>
-        </select>
+        <div>
+          Page {currentPage} of {totalPages}
+        </div>
       </div>
+
+      <div className="mt-4">
+        <button
+          onClick={generatePDF}
+          className="px-4 py-2 bg-green-500 text-white rounded-md mr-2"
+        >
+          Download PDF
+        </button>
+        <CSVLink
+          data={filteredPatients}
+          filename={"patient_list.csv"}
+          className="px-4 py-2 bg-yellow-500 text-white rounded-md"
+        >
+          Export CSV
+        </CSVLink>
+        <button className="px-4 py-2 bg-indigo-500 text-white rounded-md ml-2">
+          Export Excel
+        </button>
+      </div>
+
+      {selectedPatient && (
+        <div className="fixed top-0 left-0 w-full h-full bg-gray-800 bg-opacity-50 flex justify-center items-center">
+          <div className="bg-white p-8 rounded-lg">
+            <h2 className="text-lg font-semibold mb-4">
+              Printing Patient Details
+            </h2>
+            <p>Name: {selectedPatient.name}</p>
+            <p>Age: {selectedPatient.age}</p>
+            <p>Mobile: {selectedPatient.mobile}</p>
+            <p>Problem: {selectedPatient.problem}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
