@@ -69,4 +69,4 @@ Patient Magnet Software is a comprehensive patient management system designed to
 
 1. Clone the repository:
    ```sh
-   git clone https://github.com/yourusername/patient-magnet-software.git
+   https://github.com/Bablukmr/patient-magnet-software/tree/main
