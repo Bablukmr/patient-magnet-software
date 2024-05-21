@@ -4,6 +4,7 @@ Patient Magnet Software is a comprehensive patient management system designed to
 
 ## Key Features
 
+
 1. **Patient Management**:
    - **Patient Profiles**: Create detailed profiles for each patient, including personal information, medical history, and contact details.
    - **Search Functionality**: Quickly search for patients by name, mobile number, or medical condition.
